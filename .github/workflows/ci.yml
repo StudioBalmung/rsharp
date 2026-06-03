@@ -40,7 +40,7 @@ jobs:
       - name: Smoke test rsc
         run: |
           ./build/rsc --version
-          ./build/rsc examples/hello.rsl --check --verbose
+          ./build/rsc examples/hello.rss --check --verbose
 
       - name: Integration tests
         run: python3 tests/integration/run_tests.py --dir tests/integration
