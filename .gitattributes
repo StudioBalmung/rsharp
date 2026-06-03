@@ -7,7 +7,7 @@
 # Treat library files as R# source
 *.rslib linguist-language=RSharp
 
-# Vendor / generated files — don't count toward language stats
+# Vendor / generated files - don't count toward language stats
 build/   linguist-vendored
 *.pb.h   linguist-generated
 *.pb.cc  linguist-generated
@@ -34,3 +34,9 @@ build/   linguist-vendored
 *.so    binary
 *.dll   binary
 *.wasm  binary
+---
+fib.rss
+hello.rss
+ownership.rss
+showcase
+{showcase,advanced}
