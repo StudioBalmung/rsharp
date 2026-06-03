@@ -2,9 +2,9 @@
 
 [![CI](https://github.com/StudioBalmung/rsharp/actions/workflows/ci.yml/badge.svg)](https://github.com/StudioBalmung/rsharp/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.0.0-4D266E)](https://github.com/StudioBalmung/rsharp/releases)
+[![Version](https://img.shields.io/badge/version-1.1.0-4D266E)](https://github.com/StudioBalmung/rsharp/releases)
 
-> **High performance comparable to C++. Memory safety without the ceremony. Learning curve like Lua.**
+> **High performance. Memory safety without the ceremony.**
 
 R# is a compiled systems language that targets LLVM for native code generation.  
 It uses **single ownership + borrow checking** for memory safety, **arena-only allocation** for zero-GC predictability, and `comptime` generics for zero-cost abstractions — while keeping syntax approachable enough that you can learn the whole language in a weekend.
