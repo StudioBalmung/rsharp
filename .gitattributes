@@ -1,0 +1,36 @@
+# R# language detection for GitHub Linguist
+*.rsl  linguist-language=RSharp
+*.rsh  linguist-language=RSharp
+*.rss  linguist-language=RSharp
+*.rsp  linguist-language=RSharp
+
+# Treat library files as R# source
+*.rslib linguist-language=RSharp
+
+# Vendor / generated files — don't count toward language stats
+build/   linguist-vendored
+*.pb.h   linguist-generated
+*.pb.cc  linguist-generated
+
+# Line endings
+*.c      text eol=lf
+*.h      text eol=lf
+*.cpp    text eol=lf
+*.py     text eol=lf
+*.rsl    text eol=lf
+*.rsh    text eol=lf
+*.rss    text eol=lf
+*.rsp    text eol=lf
+*.rslib  text eol=lf
+*.toml   text eol=lf
+*.md     text eol=lf
+*.json   text eol=lf
+*.yml    text eol=lf
+*.yaml   text eol=lf
+
+# Binary
+*.o     binary
+*.a     binary
+*.so    binary
+*.dll   binary
+*.wasm  binary
