@@ -90,6 +90,7 @@ Testing/
 # Manager
 *.toml
 *.yaml
+*.yml
 
 # Nothing
 *.md
