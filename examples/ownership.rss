@@ -26,20 +26,20 @@ fn move_demo() -> void {
 -- ─── Borrowing ───────────────────────────────────────────────────
 
 fn borrow_read(buf: []u8) -> usize {
-    -- Takes a shared borrow — buf.data is NOT freed
+    -- Takes a shared borrow - buf.data is NOT freed
     var count: usize = 0
     for byte in buf { if byte != 0 { count += 1 } }
     count
 }
 
-fn borrow_write(buf: []u8) -> void {
+fn borrow_write(buf: []u8) => void {
     -- Takes a mutable borrow
     for i in 0..buf.len {
         buf[i] = 0
     }
 }
 
-fn borrow_demo() -> void {
+fn borrow_demo() => void {
     var data = [1u8, 2u8, 3u8, 4u8]
     let nonzero = borrow_read(data)  -- shared borrow, data still valid
     borrow_write(data)               -- mutable borrow, data is zeroed
@@ -48,11 +48,11 @@ fn borrow_demo() -> void {
 
 -- ─── Arena allocation ─────────────────────────────────────────────
 
-fn arena_demo() -> void {
+fn arena_demo() => void {
     let arena = Arena.init(1024 * 64)   -- 64 KB scratch arena
     defer arena.deinit()
 
-    -- Allocate into the arena — all freed when arena goes out of scope
+    -- Allocate into the arena - all freed when arena goes out of scope
     let names = arena.alloc([]u8, 16)
     names[0] = "Aether"
     names[1] = "Balmung"
@@ -69,7 +69,7 @@ enum IoError {
     UnexpectedEof,
 }
 
-fn read_file(path: []u8) -> Result<[]u8, IoError> {
+fn read_file(path: []u8) => Result<[]u8, IoError> {
     let fd = try fs.open(path)
     defer fd.close()                    -- always runs, even on early return
 
@@ -77,7 +77,7 @@ fn read_file(path: []u8) -> Result<[]u8, IoError> {
     data
 }
 
-fn main() -> i32 {
+fn main() => i32 {
     move_demo()
     borrow_demo()
     arena_demo()
