@@ -1,0 +1,17 @@
+// fizzbuzz.rsl — FizzBuzz in R#
+
+fn fizzbuzz(n: i32) => str {
+    match (n % 3, n % 5) {
+        (0, 0) => "FizzBuzz",
+        (0, _) => "Fizz",
+        (_, 0) => "Buzz",
+        _      => @int_to_str(n),
+    }
+}
+
+fn main() => i32 {
+    for i in 1..=100 {
+        @print("{}", fizzbuzz(i))
+    }
+    0
+}

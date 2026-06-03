@@ -1,0 +1,57 @@
+// enums_match.rsl — algebraic enums + exhaustive match
+
+enum Json {
+    Null,
+    Bool   { value: bool },
+    Number { value: f64 },
+    Str    { value: str },
+    Array  { items: []Json },
+}
+
+fn json_type(j: Json) => str {
+    match j {
+        .Null            => "null",
+        .Bool  { value } => if value { "true" } else { "false" },
+        .Number { value }=> @fmt("{}", value),
+        .Str   { value } => @fmt(""{}"", value),
+        .Array { items } => @fmt("[{} items]", items.len),
+    }
+}
+
+enum Result<T, E> {
+    Ok  { value: T },
+    Err { error: E },
+}
+
+fn safe_div(a: f64, b: f64) => Result<f64, str> {
+    if b == 0.0 {
+        Result::Err { error: "division by zero" }
+    } else {
+        Result::Ok { value: a / b }
+    }
+}
+
+fn main() => i32 {
+    let values = [
+        Json::Null,
+        Json::Bool   { value: true },
+        Json::Number { value: 3.14 },
+        Json::Str    { value: "hello" },
+    ]
+
+    for v in values {
+        @print("json: {}", json_type(v))
+    }
+
+    match safe_div(10.0, 3.0) {
+        .Ok  { value } => @print("result: {:.4}", value),
+        .Err { error } => @print("error: {}", error),
+    }
+
+    match safe_div(1.0, 0.0) {
+        .Ok  { value } => @print("result: {}", value),
+        .Err { error } => @print("error: {}", error),
+    }
+
+    0
+}

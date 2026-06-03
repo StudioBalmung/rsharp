@@ -1,0 +1,19 @@
+// integration test: structs and methods
+struct Point { x: f32, y: f32 }
+
+impl Point {
+    fn new(x: f32, y: f32) => Point { Point { x, y } }
+    fn dist_sq(self, o: Point) => f32 {
+        let dx = self.x - o.x
+        let dy = self.y - o.y
+        dx*dx + dy*dy
+    }
+}
+
+fn main() => i32 {
+    let a = Point.new(0.0, 0.0)
+    let b = Point.new(3.0, 4.0)
+    let d = a.dist_sq(b)
+    @assert(d == 25.0, "dist_sq failed")
+    0
+}
