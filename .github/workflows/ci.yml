@@ -1,0 +1,113 @@
+name: R# CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main]
+
+env:
+  CMAKE_VERSION: "3.28"
+  BUILD_TYPE: Debug
+
+jobs:
+  # Build & test on Linux x86_64 
+  build-linux-x64:
+    name: Linux x86_64
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y cmake ninja-build gcc-13 g++-13 python3
+
+      - name: Configure
+        run: |
+          cmake -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -DCMAKE_C_COMPILER=gcc-13 \
+            -DCMAKE_CXX_COMPILER=g++-13 \
+            -DRSHARP_WITH_LLVM=OFF
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Lexer unit tests
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Smoke test rsc
+        run: |
+          ./build/rsc --version
+          ./build/rsc examples/hello.rsl --check --verbose
+
+      - name: Integration tests
+        run: python3 tests/integration/run_tests.py --dir tests/integration
+
+  # Build on Linux ARM64 (cross-compile) 
+  build-linux-arm64:
+    name: Linux ARM64
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install cross toolchain
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y cmake gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+      - name: Configure (cross)
+        run: |
+          cmake -B build-arm \
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \
+            -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ \
+            -DCMAKE_SYSTEM_NAME=Linux \
+            -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
+            -DRSHARP_WITH_LLVM=OFF
+      - name: Build
+        run: cmake --build build-arm --parallel
+
+  # WASM build
+  build-wasm:
+    name: WASM32-WASI
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install WASI SDK
+        run: |
+          wget -q https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-22/wasi-sdk-22.0-linux.tar.gz
+          tar -xf wasi-sdk-22.0-linux.tar.gz
+          echo "WASI_SDK=$PWD/wasi-sdk-22.0" >> $GITHUB_ENV
+      - name: Configure (wasm)
+        run: |
+          cmake -B build-wasm \
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -DCMAKE_TOOLCHAIN_FILE=$WASI_SDK/share/cmake/wasi-sdk.cmake \
+            -DRSHARP_WITH_LLVM=OFF \
+            -DRSHARP_TARGET_WASM=ON
+      - name: Build
+        run: cmake --build build-wasm --parallel
+
+  # Python interpreter tests
+  interpreter:
+    name: Python Interpreter
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run interpreter tests
+        run: python3 -m pytest tests/interpreter/ -v
+
+  # Format check
+  lint:
+    name: Lint & Format
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: clang-format check (C/C++ sources)
+        run: |
+          sudo apt-get install -y clang-format-18
+          find compiler runtime tools tests -name "*.c" -o -name "*.h" -o -name "*.cpp" \
+            | xargs clang-format-18 --dry-run --Werror --style=file 2>&1 || true
