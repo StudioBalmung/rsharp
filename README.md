@@ -85,7 +85,7 @@ let b = Vec3f { data: [4.0, 5.0, 6.0] }
 
 | Feature | R# | Rust | Zig | C++ |
 |---|---|---|---|---|
-| Performance | Native (LLVM) | | | |
+| Performance | Native (LLVM) | Native | Native | Native |
 | Memory safety | Ownership | | Manual | |
 | Lifetime annotations | Rarely needed | Required | N/A | N/A |
 | Garbage collector | None | | | |
