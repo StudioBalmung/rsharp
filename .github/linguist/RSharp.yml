@@ -1,0 +1,19 @@
+RSharp:
+  type: programming
+  color: "#4D266E"
+  extensions:
+    - .rsl
+    - .rsh
+    - .rss
+    - .rsp
+    - .rslib
+  filenames: []
+  interpreters:
+    - rsc
+    - rsrun
+  tm_scope: source.rust      # closest grammar 
+  ace_mode: rust
+  language_id: 999001        # placeholder 
+  aliases:
+    - rsharp
+    - r-sharp
