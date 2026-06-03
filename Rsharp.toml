@@ -1,0 +1,63 @@
+[package]
+name        = "rsharp"
+version     = "1.0.0"
+description = "R# Programming Language — toolchain and standard library"
+authors     = ["Studio Balmung <No mail>"]
+license     = "MIT"
+homepage    = "https://github.com/StudioBalmung/rsharp"
+repository  = "https://github.com/StudioBalmung/rsharp"
+keywords    = ["systems", "language", "compiler", "llvm"]
+edition     = "2025"
+
+[build]
+# Primary compiler source target (C11 + C++20 + LLVM)
+backend     = "llvm"          # "llvm" | "c" | "interpreter"
+targets     = ["x86_64-linux-gnu", "aarch64-linux-gnu", "wasm32-wasi"]
+default_target = "native"
+
+[stdlib]
+# The standard library is written in R# itself
+path        = "stdlib"
+modules     = ["core", "io", "math", "collections"]
+
+[dev-dependencies]
+# No external dependencies for bootstrap — stdlib is self-contained
+
+[profile.debug]
+opt_level   = 0
+debug_info  = true
+assertions  = true
+overflow_checks = true
+
+[profile.release]
+opt_level   = 2
+debug_info  = false
+assertions  = false
+lto         = true
+strip       = true
+
+[profile.release-safe]
+opt_level   = 2
+debug_info  = false
+assertions  = true    # keep assertions even in release
+lto         = false
+
+[profile.size]
+opt_level   = "s"
+debug_info  = false
+lto         = true
+
+[targets.x86_64-linux-gnu]
+linker      = "lld"
+cpu         = "x86-64"
+features    = "+sse4.2,+avx2"
+
+[targets.aarch64-linux-gnu]
+linker      = "lld"
+cpu         = "generic"
+features    = "+neon"
+
+[targets.wasm32-wasi]
+linker      = "wasm-ld"
+cpu         = "generic"
+no_std      = false
