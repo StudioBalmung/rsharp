@@ -1,8 +1,8 @@
 -- examples/fib.rss
--- Fibonacci — demonstrates recursive functions, match, comptime
+-- Fibonacci - demonstrates recursive functions, match, comptime
 
 -- Recursive (naive, for illustration)
-fn fib_rec(n: u32) -> u64 {
+fn fib_rec(n: u32) => u64 {
     match n {
         0 => 0,
         1 => 1,
@@ -11,7 +11,7 @@ fn fib_rec(n: u32) -> u64 {
 }
 
 -- Iterative (efficient)
-fn fib(n: u32) -> u64 {
+fn fib(n: u32) => u64 {
     if n <= 1 { return n }
     var a: u64 = 0
     var b: u64 = 1
@@ -24,14 +24,14 @@ fn fib(n: u32) -> u64 {
 }
 
 -- Comptime fibonacci (computed at compile time, zero runtime cost)
-fn fib_comptime(comptime n: u32) -> u64 {
+fn fib_comptime(comptime n: u32) => u64 {
     comptime {
         if n <= 1 { n }
         else { fib_comptime(n - 1) + fib_comptime(n - 2) }
     }
 }
 
-fn main() -> i32 {
+fn main() => i32 {
     -- Print first 15 fibonacci numbers
     for i in 0..15 {
         @print("fib({}) = {}", i, fib(i))
