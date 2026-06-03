@@ -91,3 +91,5 @@ Testing/
 
 # Nothing
 *.md
+.clang-format
+
