@@ -33,6 +33,7 @@
 *.la
 *.a
 *.lib
+*.rslib
 
 # Executables
 *.exe
@@ -76,6 +77,7 @@ Testing/
 *.rsl
 *.rss
 *.rsp
+*.rsh
 
 # Implement
 *.py
