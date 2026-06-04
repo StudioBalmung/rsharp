@@ -1,5 +1,5 @@
 # R# - Systems Programming Language
-![Logo](docs/rsharp-logo.png)
+<img src="docs/rsharp-logo.png" alt="Logo" width="200">
 
 [![CI](https://github.com/StudioBalmung/rsharp/actions/workflows/ci.yml/badge.svg)](https://github.com/StudioBalmung/rsharp/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
