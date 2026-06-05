@@ -1,0 +1,30 @@
+// R# Resource File for Windows executable icons
+IDI_ICON1       ICON    DISCARDABLE     "rsharp-logo.ico"
+
+// Version information (Windows RC format)
+1 VERSIONINFO
+FILEVERSION     1,0,1,0
+PRODUCTVERSION  1,0,1,0
+FILEFLAGSMASK   0x3f
+FILEFLAGS       0
+FILEOS          VOS__WINDOWS32
+FILETYPE        VFT_APP
+FILESUBTYPE     0
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904E4"
+        BEGIN
+            VALUE "CompanyName",      "Studio Balmung"
+            VALUE "FileDescription",  "R# Compiler & Build System"
+            VALUE "FileVersion",      "1.0.1.0"
+            VALUE "ProductName",      "R# Programming Language"
+            VALUE "ProductVersion",   "1.0.1.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0409, 1252
+    END
+END
+

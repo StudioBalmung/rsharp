@@ -1,6 +1,6 @@
 [package]
 name        = "rsharp"
-version     = "1.0.0"
+version     = "1.0.1"
 description = "R# Programming Language — toolchain and standard library"
 authors     = ["Studio Balmung <No mail>"]
 license     = "MIT"
