@@ -30,10 +30,17 @@ Arena arena_create(size_t initial_capacity) {
 
 /* Align up to a power-of-two boundary */
 static inline size_t align_up(size_t n, size_t align) {
+    if (align == 0) align = 8;
+    if ((align & (align - 1)) != 0) {
+        size_t pow2 = 1;
+        while (pow2 < align) pow2 <<= 1;
+        align = pow2;
+    }
     return (n + align - 1) & ~(align - 1);
 }
 
 void *arena_alloc(Arena *a, size_t size, size_t align) {
+    if (!a || !a->head) return NULL;
     if (size == 0) return NULL;
     if (align == 0) align = 8; /* default to 8-byte alignment */
 
@@ -62,6 +69,7 @@ void *arena_alloc(Arena *a, size_t size, size_t align) {
 }
 
 void *arena_calloc(Arena *a, size_t count, size_t elem_size) {
+    if (elem_size != 0 && count > ((size_t)-1) / elem_size) return NULL;
     size_t total = count * elem_size;
     void *ptr = arena_alloc(a, total, elem_size > 8 ? 8 : elem_size);
     if (ptr) memset(ptr, 0, total);
