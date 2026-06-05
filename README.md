@@ -2,11 +2,11 @@
 
 [![CI](https://github.com/StudioBalmung/rsharp/actions/workflows/ci.yml/badge.svg)](https://github.com/StudioBalmung/rsharp/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.1.0-4D266E)](https://github.com/StudioBalmung/rsharp/releases)
+[![Version](https://img.shields.io/badge/version-1.0.1-4D266E)](https://github.com/StudioBalmung/rsharp/releases)
 
 <img src="docs/rsharp-logo.png" alt="Logo" width="150">
 
-> **High performance. Memory safety without the ceremony.**
+> **High performance comparable to C++. Memory safety without the ceremony. Learning curve like Lua.**
 
 R# is a compiled systems language that targets LLVM for native code generation.  
 It uses **single ownership + borrow checking** for memory safety, **arena-only allocation** for zero-GC predictability, and `comptime` generics for zero-cost abstractions — while keeping syntax approachable enough that you can learn the whole language in a weekend.
@@ -85,9 +85,12 @@ let b = Vec3f { data: [4.0, 5.0, 6.0] }
 
 ## Why R#?
 
+> GitHub note: `.rsl`, `.rsh`, `.rss`, and `.rsp` are mapped to R# via `.gitattributes`.
+> If GitHub does not yet display "R#" as a language label, that means the language needs upstream Linguist support.
+
 | Feature | R# | Rust | Zig | C++ |
 |---|---|---|---|---|
-| Performance | Native (LLVM) | Native | Native | Native |
+| Performance | Native (LLVM) | | | |
 | Memory safety | Ownership | | Manual | |
 | Lifetime annotations | Rarely needed | Required | N/A | N/A |
 | Garbage collector | None | | | |
@@ -127,7 +130,7 @@ sudo cmake --install build
 
 ```bash
 rsharp --version
-# rsharp 1.0.0 (rsl 1.0.0, rsc 1.0.0, edition 2025)
+# rsharp 1.0.1 (rsl 1.0.1, rsc 1.0.1, edition 2025)
 ```
 
 ---
