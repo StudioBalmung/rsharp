@@ -7,6 +7,10 @@ R#:
     - ".rss"
     - ".rsp"
     - ".rslib"
+  filenames: []
+  interpreters:
+    - rsc
+    - rsrun
   tm_scope: source.rust
   ace_mode: rust
   language_id: 999001
