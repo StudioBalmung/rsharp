@@ -6,10 +6,10 @@
 
 <img src="docs/rsharp-logo.png" alt="Logo" width="150">
 
-> **High performance. Memory safety without the ceremony.**
+> **High performance. Memory safety without the ceremony. Learning curve like Lua.**
 
 R# is a compiled systems language that targets LLVM for native code generation.  
-It uses **single ownership + borrow checking** for memory safety, **arena-only allocation** for zero-GC predictability, and `comptime` generics for zero-cost abstractions — while keeping syntax approachable enough that you can learn the whole language in a weekend.
+It uses **single ownership + borrow checking** for memory safety, **arena-only allocation** for zero-GC predictability, and `comptime` generics for zero-cost abstractions - while keeping syntax approachable enough that you can learn the whole language in a weekend.
 
 ---
 
@@ -130,7 +130,7 @@ sudo cmake --install build
 
 ```bash
 rsharp --version
-# rsharp 1.0.1 (rsl 1.0.1, rsc 1.0.1, edition 2025)
+# rsharp 1.0.2 (rsl 1.0.2, rsc 1.0.2, edition 2025)
 ```
 
 ---
