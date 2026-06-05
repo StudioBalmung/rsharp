@@ -6,7 +6,7 @@
 
 <img src="docs/rsharp-logo.png" alt="Logo" width="150">
 
-> **High performance comparable to C++. Memory safety without the ceremony.**
+> **High performance. Memory safety without the ceremony.**
 
 R# is a compiled systems language that targets LLVM for native code generation.  
 It uses **single ownership + borrow checking** for memory safety, **arena-only allocation** for zero-GC predictability, and `comptime` generics for zero-cost abstractions — while keeping syntax approachable enough that you can learn the whole language in a weekend.
