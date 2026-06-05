@@ -169,7 +169,7 @@ struct Stmt {
         struct { Ident name; Type *ty; Expr *init; bool is_mut; } let;
         struct { Expr *value; }                                    ret;
         struct { Expr *value; }                                    break_s;
-        struct { Expr *inner; }                                    defer_s;
+        struct { Stmt *inner; }                                    defer_s;
         struct { Stmt **body; size_t count; }                      unsafe_s;
         struct { Ident bind; Expr *iter; Stmt **body; size_t c; } for_s;
         struct { Expr *cond; Stmt **body; size_t c; }              while_s;
