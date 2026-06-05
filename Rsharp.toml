@@ -1,7 +1,7 @@
 [package]
 name        = "rsharp"
 version     = "1.0.1"
-description = "R# Programming Language — toolchain and standard library"
+description = "R# Programming Language - toolchain and standard library"
 authors     = ["Studio Balmung <No mail>"]
 license     = "MIT"
 homepage    = "https://github.com/StudioBalmung/rsharp"
@@ -21,7 +21,7 @@ path        = "stdlib"
 modules     = ["core", "io", "math", "collections"]
 
 [dev-dependencies]
-# No external dependencies for bootstrap — stdlib is self-contained
+# No external dependencies for bootstrap, stdlib is self-contained
 
 [profile.debug]
 opt_level   = 0
