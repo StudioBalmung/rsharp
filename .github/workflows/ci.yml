@@ -40,10 +40,10 @@ jobs:
       - name: Smoke test rsc
         run: |
           ./build/rsc --version
-          ./build/rsc examples/hello.rss --check --verbose
+          ./build/rsc examples/hello.rsl --check --verbose
 
       - name: Integration tests
-        run: python3 tests/integration/run_tests.py --dir tests/integration
+        run: python3 tests/integration/run_tests.py --dir tests/integration --rsc ./build/rsc
 
   # Build on Linux ARM64 (cross-compile) 
   build-linux-arm64:
@@ -97,6 +97,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Install Python test deps
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install pytest
       - name: Run interpreter tests
         run: python3 -m pytest tests/interpreter/ -v
 
