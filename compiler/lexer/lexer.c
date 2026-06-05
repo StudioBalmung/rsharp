@@ -61,7 +61,7 @@ static void skip_trivia(Lexer *l) {
             while (!at_end(l)&&peek_c(l)!='\n') advance(l);
             continue;
         }
-        /* -- line comment (R# style) */
+        /* Legacy -- line comment */
         if (c=='-'&&peek2_c(l)=='-') {
             while (!at_end(l)&&peek_c(l)!='\n') advance(l);
             continue;
