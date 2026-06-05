@@ -27,7 +27,7 @@
 #include "../../compiler/error/diagnostic.h"
 #include "../../runtime/memory/arena.h"
 
-#define RSC_VERSION "1.0.1"
+#define RSC_VERSION "1.0.2"
 
 typedef struct {
     const char *output;
