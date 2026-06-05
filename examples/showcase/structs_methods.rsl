@@ -1,0 +1,50 @@
+// structs_methods.rsl — structs, impl blocks, interfaces
+
+interface Shape {
+    fn area(self) => f64
+    fn perimeter(self) => f64
+    fn describe(self) => void
+}
+
+struct Circle {
+    pub radius: f64,
+}
+
+struct Rectangle {
+    pub width:  f64,
+    pub height: f64,
+}
+
+impl Shape for Circle {
+    fn area(self) => f64 {
+        @PI_F64 * self.radius * self.radius
+    }
+    fn perimeter(self) => f64 {
+        2.0 * @PI_F64 * self.radius
+    }
+    fn describe(self) => void {
+        @print("Circle(r={:.2}): area={:.2}, perim={:.2}",
+               self.radius, self.area(), self.perimeter())
+    }
+}
+
+impl Shape for Rectangle {
+    fn area(self) => f64 { self.width * self.height }
+    fn perimeter(self) => f64 { 2.0 * (self.width + self.height) }
+    fn describe(self) => void {
+        @print("Rect({}x{}): area={:.2}, perim={:.2}",
+               self.width, self.height, self.area(), self.perimeter())
+    }
+}
+
+fn print_shape(s: Shape) => void {
+    s.describe()
+}
+
+fn main() => i32 {
+    let c = Circle { radius: 5.0 }
+    let r = Rectangle { width: 4.0, height: 6.0 }
+    print_shape(c)
+    print_shape(r)
+    0
+}

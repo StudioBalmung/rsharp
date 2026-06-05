@@ -1,0 +1,6 @@
+// hello_short.rsl — expression-body shorthand
+// fn name() => expr   (no braces, no return, implicit 0 exit)
+
+fn greet(name: str) => @print("Hello, {}!", name)
+
+fn main() => greet("World")
