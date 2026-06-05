@@ -11,31 +11,31 @@ add_compile_options(-Wall -Wextra -Wpedantic -Wno-unused-parameter -Wno-unused-f
 option(RSHARP_WITH_LLVM   "Build with LLVM backend (requires LLVM 17+)" OFF)
 option(RSHARP_TARGET_WASM "Build for WASM (cross-compile via WASI SDK)"  OFF)
 
-# Runtime memory library 
+# ── Runtime memory library ──────────────────────────────────────────
 add_library(rsharp_runtime STATIC runtime/memory/arena.c)
 target_include_directories(rsharp_runtime PUBLIC runtime/memory)
 
-# Diagnostic library 
+# ── Diagnostic library ──────────────────────────────────────────────
 add_library(rsharp_diag STATIC compiler/error/diagnostic.c)
 target_include_directories(rsharp_diag PUBLIC compiler/error)
 target_link_libraries(rsharp_diag PRIVATE rsharp_runtime)
 
-# Lexer library 
+# ── Lexer library ────────────────────────────────────────────────────
 add_library(rsharp_lexer STATIC compiler/lexer/lexer.c)
 target_include_directories(rsharp_lexer PUBLIC compiler/lexer)
 target_link_libraries(rsharp_lexer PRIVATE rsharp_runtime rsharp_diag)
 
-# Parser library 
+# ── Parser library ───────────────────────────────────────────────────
 add_library(rsharp_parser STATIC compiler/parser/parser.c)
 target_include_directories(rsharp_parser PUBLIC compiler/parser)
 target_link_libraries(rsharp_parser PRIVATE rsharp_lexer)
 
-# - Sema (type checker) 
+# ── Sema (type checker) ──────────────────────────────────────────────
 add_library(rsharp_sema STATIC compiler/sema/sema.c)
 target_include_directories(rsharp_sema PUBLIC compiler/sema)
 target_link_libraries(rsharp_sema PRIVATE rsharp_parser rsharp_diag)
 
-# LLVM codegen (optional) 
+# ── LLVM codegen (optional) ──────────────────────────────────────────
 if(RSHARP_WITH_LLVM)
     find_package(LLVM REQUIRED CONFIG)
     message(STATUS "Found LLVM ${LLVM_VERSION}")
@@ -52,22 +52,28 @@ if(RSHARP_WITH_LLVM)
     target_link_libraries(rsharp_codegen PRIVATE ${LLVM_LIBS})
 endif()
 
-# rsc compiler driver 
-add_executable(rsc tools/rsc/main.c)
-target_link_libraries(rsc PRIVATE rsharp_sema rsharp_lexer rsharp_diag rsharp_runtime)
-if(RSHARP_WITH_LLVM)
-    target_link_libraries(rsc PRIVATE rsharp_codegen)
-    target_compile_definitions(rsc PRIVATE RSHARP_WITH_LLVM)
+# ── rsc compiler driver ─────────────────────────────────────────────
+if(NOT RSHARP_TARGET_WASM)
+    add_executable(rsc tools/rsc/main.c)
+    target_link_libraries(rsc PRIVATE rsharp_sema rsharp_lexer rsharp_diag rsharp_runtime)
+    if(RSHARP_WITH_LLVM)
+        target_link_libraries(rsc PRIVATE rsharp_codegen)
+        target_compile_definitions(rsc PRIVATE RSHARP_WITH_LLVM)
+    endif()
+
+    # ── rsl / rsharp CLI ─────────────────────────────────────────────────
+    add_executable(rsl tools/rsl/main.c)
+    # Create a Windows-friendly rsharp.exe shim from rsl.exe.
+    add_custom_command(TARGET rsl POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                $<TARGET_FILE:rsl>
+                $<TARGET_FILE_DIR:rsl>/rsharp$<TARGET_FILE_SUFFIX:rsl>
+        COMMENT "Creating rsharp executable shim")
 endif()
 
-# rsl / rsharp CLI 
-add_executable(rsl tools/rsl/main.c)
-# Create a symlink rsharp => rsl at install time
-add_custom_command(TARGET rsl POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:rsl> $<TARGET_FILE_DIR:rsl>/rsharp
-    COMMENT "Creating rsharp symlink")
+# ── Tests ─────────────────────────────────────────────────────────────
+if(NOT RSHARP_TARGET_WASM)
 
-# Tests 
 enable_testing()
 
 add_executable(test_lexer
@@ -99,9 +105,9 @@ target_include_directories(test_sema PRIVATE
     compiler/sema compiler/parser compiler/lexer compiler/error runtime/memory)
 add_test(NAME sema COMMAND test_sema)
 
-# Install
+# ── Install ────────────────────────────────────────────────────────────
 install(TARGETS rsc rsl DESTINATION bin)
-install(PROGRAMS $<TARGET_FILE_DIR:rsl>/rsharp DESTINATION bin)
+install(PROGRAMS $<TARGET_FILE_DIR:rsl>/rsharp$<TARGET_FILE_SUFFIX:rsl> DESTINATION bin)
 install(DIRECTORY stdlib/ DESTINATION share/rsharp/stdlib
         FILES_MATCHING
         PATTERN "*.rsl" PATTERN "*.rsh" PATTERN "*.rss"
@@ -109,13 +115,15 @@ install(DIRECTORY stdlib/ DESTINATION share/rsharp/stdlib
 install(DIRECTORY docs/ DESTINATION share/rsharp/docs
         FILES_MATCHING PATTERN "*.md")
 
-# rsrun
+# ── rsrun ────────────────────────────────────────────────────────────
 add_executable(rsrun tools/rsrun/main.c)
 
-# rsfmt
+# ── rsfmt ────────────────────────────────────────────────────────────
 add_executable(rsfmt tools/rsfmt/main.c)
 
-# rsdoc
+# ── rsdoc ────────────────────────────────────────────────────────────
 add_executable(rsdoc tools/rsdoc/main.c)
 
 install(TARGETS rsrun rsfmt rsdoc DESTINATION bin)
+
+endif()
