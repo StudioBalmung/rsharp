@@ -1,7 +1,7 @@
 // stdlib/core/core.rsl — R# Core Standard Library
 // Auto-imported by every R# compilation unit
 
-pub const VERSION: str = "1.0.0"
+pub const VERSION: str = "1.0.2"
 pub const PI:      f64 = 3.14159265358979323846
 pub const PI_F32:  f32 = 3.14159265358979323846
 pub const E:       f64 = 2.71828182845904523536
