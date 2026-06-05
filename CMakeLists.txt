@@ -1,5 +1,12 @@
 cmake_minimum_required(VERSION 3.22)
-project(rsharp VERSION 1.0.1 LANGUAGES C CXX)
+project(rsharp VERSION 1.0.2 LANGUAGES C CXX)
+
+if(WIN32)
+    enable_language(RC)
+    set(RSHARP_WIN_RESOURCES resources.rc)
+else()
+    set(RSHARP_WIN_RESOURCES)
+endif()
 
 set(CMAKE_C_STANDARD   11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -54,7 +61,7 @@ endif()
 
 # ── rsc compiler driver ─────────────────────────────────────────────
 if(NOT RSHARP_TARGET_WASM)
-    add_executable(rsc tools/rsc/main.c)
+    add_executable(rsc tools/rsc/main.c ${RSHARP_WIN_RESOURCES})
     target_link_libraries(rsc PRIVATE rsharp_sema rsharp_lexer rsharp_diag rsharp_runtime)
     if(RSHARP_WITH_LLVM)
         target_link_libraries(rsc PRIVATE rsharp_codegen)
@@ -62,7 +69,7 @@ if(NOT RSHARP_TARGET_WASM)
     endif()
 
     # ── rsl / rsharp CLI ─────────────────────────────────────────────────
-    add_executable(rsl tools/rsl/main.c)
+    add_executable(rsl tools/rsl/main.c ${RSHARP_WIN_RESOURCES})
     # Create a Windows-friendly rsharp.exe shim from rsl.exe.
     add_custom_command(TARGET rsl POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -116,13 +123,13 @@ install(DIRECTORY docs/ DESTINATION share/rsharp/docs
         FILES_MATCHING PATTERN "*.md")
 
 # ── rsrun ────────────────────────────────────────────────────────────
-add_executable(rsrun tools/rsrun/main.c)
+add_executable(rsrun tools/rsrun/main.c ${RSHARP_WIN_RESOURCES})
 
 # ── rsfmt ────────────────────────────────────────────────────────────
-add_executable(rsfmt tools/rsfmt/main.c)
+add_executable(rsfmt tools/rsfmt/main.c ${RSHARP_WIN_RESOURCES})
 
 # ── rsdoc ────────────────────────────────────────────────────────────
-add_executable(rsdoc tools/rsdoc/main.c)
+add_executable(rsdoc tools/rsdoc/main.c ${RSHARP_WIN_RESOURCES})
 
 install(TARGETS rsrun rsfmt rsdoc DESTINATION bin)
 
