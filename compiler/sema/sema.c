@@ -51,7 +51,13 @@ void sema_pop_scope(SemaCtx *ctx) {
 
 Symbol *sema_define(SemaCtx *ctx, Ident name, SymbolKind kind, ResolvedType *ty, bool is_mut) {
     Scope *s=ctx->scope;
-    if (s->count==s->cap) { s->cap*=2; }
+    if (s->count==s->cap) {
+        size_t old_cap = s->cap;
+        s->cap *= 2;
+        Symbol **grown = arena_calloc(ctx->arena, s->cap, sizeof(Symbol*));
+        memcpy(grown, s->syms, old_cap * sizeof(Symbol*));
+        s->syms = grown;
+    }
     Symbol *sym=arena_calloc(ctx->arena,1,sizeof*sym);
     sym->name=name; sym->kind=kind; sym->type=ty; sym->is_mut=is_mut;
     s->syms[s->count++]=sym;
@@ -96,6 +102,20 @@ static ResolvedType *resolve_type(SemaCtx *ctx, const Type *t) {
         case TY_SLICE: {
             ResolvedType *r=NEW(ctx,ResolvedType);
             r->kind=RTYPE_SLICE; r->slice_ty.elem=resolve_type(ctx,t->slice.elem);
+            return r;
+        }
+        case TY_ARRAY: {
+            ResolvedType *r=NEW(ctx,ResolvedType);
+            r->kind=RTYPE_ARRAY;
+            r->array_ty.elem=resolve_type(ctx,t->array.elem);
+            r->array_ty.count=0;
+            return r;
+        }
+        case TY_NAMED: {
+            Symbol *sym = sema_lookup(ctx, t->named.name);
+            if (sym && (sym->kind == SYM_STRUCT || sym->kind == SYM_ENUM)) return sym->type;
+            ResolvedType *r=NEW(ctx,ResolvedType);
+            r->kind=RTYPE_INFER;
             return r;
         }
         case TY_INFER:  return ctx->ty_i32; /* default integer width */
@@ -149,6 +169,29 @@ const char *sema_type_name(const ResolvedType *t, Arena *scratch) {
         }
         default: return "<type>";
     }
+}
+
+static bool sema_is_copy_type(const ResolvedType *t) {
+    if (!t) return true;
+    switch (t->kind) {
+        case RTYPE_VOID:
+        case RTYPE_NEVER:
+        case RTYPE_INT:
+        case RTYPE_FLOAT:
+        case RTYPE_BOOL:
+        case RTYPE_CHAR:
+        case RTYPE_PTR:
+            return true;
+        default:
+            return false;
+    }
+}
+
+static void sema_mark_moved_if_owned(SemaCtx *ctx, Expr *e) {
+    if (!e || e->kind != EXPR_IDENT) return;
+    Symbol *sym = sema_lookup(ctx, e->ident);
+    if (!sym || sema_is_copy_type(sym->type)) return;
+    sym->moved = true;
 }
 
 /* ── Expression type-checking ─────────────────────────────────────── */
@@ -208,8 +251,18 @@ ResolvedType *sema_check_expr(SemaCtx *ctx, Expr *e) {
         case EXPR_CALL: {
             /* Simplified: look up function, return its ret type */
             ResolvedType *callee=sema_check_expr(ctx,e->call.callee);
-            for (size_t i=0;i<e->call.argc;i++) sema_check_expr(ctx,e->call.args[i]);
+            for (size_t i=0;i<e->call.argc;i++) {
+                ResolvedType *arg_ty = sema_check_expr(ctx,e->call.args[i]);
+                if (!sema_is_copy_type(arg_ty)) sema_mark_moved_if_owned(ctx, e->call.args[i]);
+            }
             e->type = (callee->kind==RTYPE_FN) ? callee->fn_ty.ret : ctx->ty_void;
+            break;
+        }
+        case EXPR_STRUCT_LIT: {
+            for (size_t i=0;i<e->struct_lit.fieldc;i++) {
+                sema_check_expr(ctx, e->struct_lit.fields[i].value);
+            }
+            e->type = resolve_type(ctx, e->struct_lit.ty);
             break;
         }
         case EXPR_IF: {
@@ -257,6 +310,9 @@ bool sema_check_stmt(SemaCtx *ctx, Stmt *s) {
                 snprintf(buf,sizeof buf,"type mismatch: annotated %s, but init is %s",
                          sema_type_name(ann_ty,sc),sema_type_name(init_ty,sc));
                 diag_error(ctx->diags,NULL,NULL,s->span,buf,NULL,NULL);
+            }
+            if (s->let.init && !sema_is_copy_type(init_ty)) {
+                sema_mark_moved_if_owned(ctx, s->let.init);
             }
             sema_define(ctx,s->let.name,SYM_LOCAL,ann_ty,s->let.is_mut);
             break;
