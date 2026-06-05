@@ -13,8 +13,8 @@
 #include <direct.h>
 #endif
 
-#define RSL_VERSION    "1.0.1"
-#define RSC_VERSION    "1.0.1"
+#define RSL_VERSION    "1.0.2"
+#define RSC_VERSION    "1.0.2"
 #define RSHARP_EDITION "2025"
 
 static bool g_color = false;
