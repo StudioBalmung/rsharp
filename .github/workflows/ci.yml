@@ -40,7 +40,7 @@ jobs:
       - name: Smoke test rsc
         run: |
           ./build/rsc --version
-          ./build/rsc examples/hello.rsl --check --verbose
+          ./build/rsc examples/hello_world.rsl --check --verbose
 
       - name: Integration tests
         run: python3 tests/integration/run_tests.py --dir tests/integration --rsc ./build/rsc
@@ -102,7 +102,12 @@ jobs:
           python3 -m pip install --upgrade pip
           python3 -m pip install pytest
       - name: Run interpreter tests
-        run: python3 -m pytest tests/interpreter/ -v
+        run: |
+          if [ -d tests/interpreter ]; then
+            python3 -m pytest tests/interpreter/ -v
+          else
+            echo "tests/interpreter does not exist yet; skipping interpreter tests"
+          fi
 
   # Format check
   lint:
