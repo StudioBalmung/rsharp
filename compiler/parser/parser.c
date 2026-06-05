@@ -1,5 +1,5 @@
 /* rsharp/compiler/parser/parser.c
- * R# Recursive-Descent Parser — C11
+ * R# Recursive-Descent Parser - C11
  *
  * Expression precedence (low → high):
  *  1  assignment    = += -= *= /=
@@ -26,6 +26,13 @@
 /* ─── Arena helpers ─────────────────────────────────────────────── */
 #define NEW(p, T)        ((T *)arena_calloc((p)->arena, 1, sizeof(T)))
 #define NEW_ARR(p, T, n) ((T *)arena_calloc((p)->arena, (n), sizeof(T)))
+
+static void *arena_grow_array(Parser *p, void *old_ptr, size_t old_count,
+                              size_t old_elem_size, size_t new_count) {
+    void *new_ptr = arena_calloc(p->arena, new_count, old_elem_size);
+    if (old_ptr && old_count) memcpy(new_ptr, old_ptr, old_count * old_elem_size);
+    return new_ptr;
+}
 
 /* ─── Token navigation ──────────────────────────────────────────── */
 static void advance_tok(Parser *p) {
@@ -227,6 +234,7 @@ static Expr *parse_expr(Parser *p);
 static Expr *parse_expr_prec(Parser *p, int min_prec);
 static Expr *parse_primary(Parser *p);
 static Expr *parse_unary(Parser *p);
+static Expr *parse_struct_lit_after_name(Parser *p, Token name_tok, SrcPos start);
 
 typedef enum {
     PREC_NONE = 0,
@@ -439,11 +447,15 @@ static Expr *parse_primary(Parser *p) {
         return e;
     }
 
-    /* Identifier */
+    /* Identifier or struct literal: TypeName { field: value } */
     if (match_tok(p, TOK_IDENT)) {
+        Token name_tok = p->previous;
+        if (check(p, TOK_LBRACE)) {
+            return parse_struct_lit_after_name(p, name_tok, start);
+        }
         e->kind  = EXPR_IDENT;
-        e->ident = (Ident){ p->previous.str.ptr, p->previous.str.len };
-        e->span  = p->previous.span;
+        e->ident = (Ident){ name_tok.str.ptr, name_tok.str.len };
+        e->span  = name_tok.span;
         return e;
     }
 
@@ -508,6 +520,56 @@ static Expr *parse_primary(Parser *p) {
         p->had_error = p->panic_mode = true;
     }
     e->kind = EXPR_INT_LIT; e->int_val = 0;
+    return e;
+}
+
+static Expr *parse_struct_lit_after_name(Parser *p, Token name_tok, SrcPos start) {
+    Expr *e = NEW(p, Expr);
+    e->kind = EXPR_STRUCT_LIT;
+
+    Type *ty = NEW(p, Type);
+    ty->kind = TY_NAMED;
+    ty->named.name = (Ident){ name_tok.str.ptr, name_tok.str.len };
+    ty->named.args = NULL;
+    ty->named.argc = 0;
+    ty->span = name_tok.span;
+    e->struct_lit.ty = ty;
+
+    consume(p, TOK_LBRACE, "{");
+    size_t cap = 8;
+    FieldInit *fields = NEW_ARR(p, FieldInit, cap);
+    size_t fieldc = 0;
+
+    while (!check(p, TOK_RBRACE) && !check(p, TOK_EOF)) {
+        if (fieldc == cap) {
+            fields = arena_grow_array(p, fields, fieldc, sizeof(FieldInit), cap * 2);
+            cap *= 2;
+        }
+
+        Token field_tok = consume(p, TOK_IDENT, "field name");
+        Expr *value = NULL;
+
+        if (match_tok(p, TOK_COLON) || match_tok(p, TOK_ASSIGN)) {
+            value = parse_expr(p);
+        } else {
+            value = NEW(p, Expr);
+            value->kind = EXPR_IDENT;
+            value->ident = (Ident){ field_tok.str.ptr, field_tok.str.len };
+            value->span = field_tok.span;
+        }
+
+        fields[fieldc++] = (FieldInit){
+            .name = { field_tok.str.ptr, field_tok.str.len },
+            .value = value,
+        };
+
+        match_tok(p, TOK_COMMA);
+    }
+
+    consume(p, TOK_RBRACE, "}");
+    e->struct_lit.fields = fields;
+    e->struct_lit.fieldc = fieldc;
+    e->span = span_from(start, p->previous.span.end);
     return e;
 }
 
@@ -705,7 +767,7 @@ static Stmt *parse_stmt(Parser *p) {
     /* defer */
     if (match_tok(p, TOK_DEFER)) {
         s->kind = STMT_DEFER;
-        s->defer_s.inner = (Expr*)parse_stmt(p);
+        s->defer_s.inner = parse_stmt(p);
         s->span = span_from(start, p->previous.span.end);
         return s;
     }
