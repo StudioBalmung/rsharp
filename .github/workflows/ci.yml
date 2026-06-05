@@ -25,10 +25,10 @@ jobs:
 
       - name: Configure
         run: |
-          cmake -B build -G Ninja |
-            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} |
-            -DCMAKE_C_COMPILER=gcc-13 |
-            -DCMAKE_CXX_COMPILER=g++-13 |
+          cmake -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -DCMAKE_C_COMPILER=gcc-13 \
+            -DCMAKE_CXX_COMPILER=g++-13 \
             -DRSHARP_WITH_LLVM=OFF
 
       - name: Build
