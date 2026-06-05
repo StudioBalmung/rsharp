@@ -1,0 +1,68 @@
+// stdlib/collections/vec.rsl — Dynamic array (Vec<T>)
+
+use core::Arena
+
+pub struct Vec<T> {
+    _data:  []T,
+    _len:   usize,
+    _cap:   usize,
+    _arena: *Arena,
+}
+
+pub impl<T> Vec<T> {
+    pub fn new(arena: *Arena) => Vec<T> {
+        let initial = arena.alloc(T, 8)
+        Vec<T> { _data: initial, _len: 0, _cap: 8, _arena: arena }
+    }
+
+    pub fn with_capacity(arena: *Arena, cap: usize) => Vec<T> {
+        let data = arena.alloc(T, cap)
+        Vec<T> { _data: data, _len: 0, _cap: cap, _arena: arena }
+    }
+
+    pub fn push(self, val: T) => void {
+        if self._len == self._cap { self._grow() }
+        self._data[self._len] = val
+        self._len += 1
+    }
+
+    pub fn pop(self) => ?T {
+        if self._len == 0 { return null }
+        self._len -= 1
+        self._data[self._len]
+    }
+
+    pub fn get(self, i: usize) => ?T {
+        if i >= self._len { null } else { self._data[i] }
+    }
+
+    pub fn set(self, i: usize, val: T) => void {
+        @assert(i < self._len, "Vec index out of bounds")
+        self._data[i] = val
+    }
+
+    pub fn len(self)      => usize { self._len }
+    pub fn cap(self)      => usize { self._cap }
+    pub fn is_empty(self) => bool  { self._len == 0 }
+
+    pub fn clear(self) => void { self._len = 0 }
+
+    pub fn as_slice(self) => []T { self._data[0..self._len] }
+
+    pub fn last(self)  => ?T { if self._len == 0 { null } else { self._data[self._len - 1] } }
+    pub fn first(self) => ?T { if self._len == 0 { null } else { self._data[0] } }
+
+    // Contains (requires T: Eq)
+    pub fn contains(self, val: T) => bool {
+        for x in self.as_slice() { if x == val { return true } }
+        false
+    }
+
+    fn _grow(self) => void {
+        let new_cap = self._cap * 2
+        let new_data = self._arena.alloc(T, new_cap)
+        for i in 0..self._len { new_data[i] = self._data[i] }
+        self._data = new_data
+        self._cap  = new_cap
+    }
+}

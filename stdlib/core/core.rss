@@ -1,0 +1,111 @@
+-- rsharp/stdlib/core/core.rss
+-- R# Standard Library: Core
+-- This file is the first real R# code compiled by rsc.
+-- (Initially bootstrapped via C bindings, then self-hosted.)
+
+pub const VERSION: []u8 = "0.1.0-alpha"
+
+-- ─── Option type helpers ──────────────────────────────────────────
+
+pub fn unwrap_or(opt: ?i32, default: i32) => i32 {
+    opt ?? default
+}
+
+pub fn is_some(opt: ?i32) => bool {
+    match opt {
+        null => false,
+        _    => true,
+    }
+}
+
+-- ─── Numeric utilities ────────────────────────────────────────────
+
+pub fn clamp(val: i32, lo: i32, hi: i32) => i32 {
+    if val < lo { lo }
+    else if val > hi { hi }
+    else { val }
+}
+
+pub fn clamp_f64(val: f64, lo: f64, hi: f64) => f64 {
+    if val < lo { lo }
+    else if val > hi { hi }
+    else { val }
+}
+
+pub fn lerp(a: f64, b: f64, t: f64) => f64 {
+    a + (b - a) * t
+}
+
+pub fn abs_i32(x: i32) => i32 {
+    if x < 0 { -x } else { x }
+}
+
+pub fn pow_i32(base: i32, exp: u32) => i32 {
+    var result: i32 = 1
+    var e = exp
+    var b = base
+    while e > 0 {
+        if e % 2 == 1 { result *= b }
+        b *= b
+        e /= 2
+    }
+    result
+}
+
+-- ─── Slice utilities ─────────────────────────────────────────────
+
+pub fn fill(slice: []i32, value: i32) => void {
+    for i in 0..slice.len {
+        slice[i] = value
+    }
+}
+
+pub fn sum_i32(slice: []i32) => i64 {
+    var total: i64 = 0
+    for x in slice { total += x }
+    total
+}
+
+pub fn min_i32(slice: []i32) => ?i32 {
+    if slice.len == 0 { return null }
+    var m = slice[0]
+    for i in 1..slice.len {
+        if slice[i] < m { m = slice[i] }
+    }
+    m
+}
+
+pub fn max_i32(slice: []i32) => ?i32 {
+    if slice.len == 0 { return null }
+    var m = slice[0]
+    for i in 1..slice.len {
+        if slice[i] > m { m = slice[i] }
+    }
+    m
+}
+
+-- ─── String utilities ────────────────────────────────────────────
+
+pub fn str_len(s: []u8) => usize {
+    var i: usize = 0
+    while s[i] != 0 { i += 1 }
+    i
+}
+
+pub fn str_eq(a: []u8, b: []u8) => bool {
+    if a.len != b.len { return false }
+    for i in 0..a.len {
+        if a[i] != b[i] { return false }
+    }
+    true
+}
+
+-- ─── Panic / assert helpers ───────────────────────────────────────
+
+pub fn unreachable() => void {
+    @panic("entered unreachable code")
+}
+
+pub fn todo() => void {
+    @panic("not yet implemented")
+}
