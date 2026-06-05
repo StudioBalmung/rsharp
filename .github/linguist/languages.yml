@@ -14,3 +14,7 @@ R#:
   tm_scope: source.rust
   ace_mode: rust
   language_id: 999001
+  aliases:
+    - rsharp
+    - r-sharp
+    
