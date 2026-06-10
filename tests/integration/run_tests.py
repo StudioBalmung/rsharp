@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-#!/usr/bin/env python3
 """
 R# Integration Test Runner
 Runs all .rsl files in the integration test directory via the interpreter.
