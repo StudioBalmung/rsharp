@@ -11,10 +11,11 @@ env:
   BUILD_TYPE: Debug
 
 jobs:
-  # Build & test on Linux x86_64 
+  # Build & test on Linux x86_64
   build-linux-x64:
     name: Linux x86_64
     runs-on: ubuntu-24.04
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -32,25 +33,30 @@ jobs:
             -DRSHARP_WITH_LLVM=OFF
 
       - name: Build
-        run: cmake --build build --parallel
+        timeout-minutes: 10
+        run: cmake --build build --parallel $(nproc)
 
       - name: Lexer unit tests
-        run: ctest --test-dir build --output-on-failure
+        timeout-minutes: 3
+        run: ctest --test-dir build --output-on-failure --timeout 30
 
       - name: Smoke test rsc
+        timeout-minutes: 2
         run: |
           ./build/rsc --version
           ./build/rsc examples/hello_world.rsl --check --verbose
 
       - name: Integration tests
+        timeout-minutes: 5
         run: |
           python3 tests/integration/run_tests.py --dir tests/integration --rsc ./build/rsc || \
             echo "::warning::Integration tests are currently non-blocking while parser/sema coverage catches up"
 
-  # Build on Linux ARM64 (cross-compile) 
+  # Build on Linux ARM64 (cross-compile)
   build-linux-arm64:
     name: Linux ARM64
     runs-on: ubuntu-24.04
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - name: Install cross toolchain
@@ -67,12 +73,14 @@ jobs:
             -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
             -DRSHARP_WITH_LLVM=OFF
       - name: Build
-        run: cmake --build build-arm --parallel
+        timeout-minutes: 10
+        run: cmake --build build-arm --parallel $(nproc)
 
   # WASM build
   build-wasm:
     name: WASM32-WASI
     runs-on: ubuntu-24.04
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - name: Install WASI SDK
@@ -88,12 +96,14 @@ jobs:
             -DRSHARP_WITH_LLVM=OFF \
             -DRSHARP_TARGET_WASM=ON
       - name: Build
-        run: cmake --build build-wasm --parallel
+        timeout-minutes: 10
+        run: cmake --build build-wasm --parallel $(nproc)
 
   # Python interpreter tests
   interpreter:
     name: Python Interpreter
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -104,9 +114,10 @@ jobs:
           python3 -m pip install --upgrade pip
           python3 -m pip install pytest
       - name: Run interpreter tests
+        timeout-minutes: 5
         run: |
           if [ -d tests/interpreter ]; then
-            python3 -m pytest tests/interpreter/ -v
+            python3 -m pytest tests/interpreter/ -v --timeout=30
           else
             echo "tests/interpreter does not exist yet; skipping interpreter tests"
           fi
@@ -115,6 +126,7 @@ jobs:
   lint:
     name: Lint & Format
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - name: clang-format check (C/C++ sources)
