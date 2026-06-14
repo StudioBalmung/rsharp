@@ -88,17 +88,6 @@ let b = Vec3f { data: [4.0, 5.0, 6.0] }
 > GitHub note: `.rsl`, `.rsh`, `.rss`, and `.rsp` are mapped to R# via `.gitattributes`.
 > If GitHub does not yet display "R#" as a language label, that means the language needs upstream Linguist support.
 
-| Feature | R# | Rust | Zig | C++ |
-|---|---|---|---|---|
-| Performance | Native (LLVM) | | | |
-| Memory safety | Ownership | | Manual | |
-| Lifetime annotations | Rarely needed | Required | N/A | N/A |
-| Garbage collector | None | | | |
-| Comptime generics || Partial || Partial |
-| Error handling | `Result`+`catch` | `Result`+`?` | Error union | Exceptions |
-| Learning curve | 🟢 Low | 🔴 High | 🟡 Medium | 🔴 Very High |
-| C interop | Direct | Via `unsafe` | Direct | Direct |
-
 ---
 
 ## Installation
