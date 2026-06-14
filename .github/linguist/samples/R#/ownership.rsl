@@ -1,0 +1,21 @@
+// R# ownership and arena allocation sample for GitHub Linguist.
+
+struct Buffer {
+    data: []u8,
+    len: usize,
+}
+
+fn consume(buf: Buffer) => void {
+    @print("consumed {} bytes", buf.len)
+}
+
+fn main() => i32 {
+    let arena = Arena.init(4096)
+    defer arena.deinit()
+
+    let data = arena.alloc(u8, 64)
+    let buf = Buffer { data: data, len: 64 }
+
+    consume(buf)
+    0
+}

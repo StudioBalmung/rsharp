@@ -1,0 +1,15 @@
+// R# compile-time evaluation sample for GitHub Linguist.
+
+fn factorial(comptime n: u32) => u64 {
+    comptime {
+        if n <= 1 { 1 }
+        else { n * factorial(n - 1) }
+    }
+}
+
+const FACT_10: u64 = factorial(10)
+
+fn main() => i32 {
+    @print("10! = {}", FACT_10)
+    0
+}

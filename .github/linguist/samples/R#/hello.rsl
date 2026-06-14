@@ -1,0 +1,6 @@
+// R# hello world sample for GitHub Linguist.
+
+fn main() => i32 {
+    @print("Hello from R#")
+    0
+}
