@@ -1,0 +1,5 @@
+// integration test: hello world compiles and type-checks
+fn main() => i32 {
+    @print("Hello, World!")
+    0
+}

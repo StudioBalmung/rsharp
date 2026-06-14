@@ -1,0 +1,11 @@
+// integration test: Result + try + catch
+fn safe_div(a: i32, b: i32) => Result<i32, str> {
+    if b == 0 { return Err("division by zero") }
+    Ok(a / b)
+}
+
+fn main() => i32 {
+    let r = safe_div(10, 2) catch |e| { @print("err: {}", e); return 1 }
+    @assert(r == 5, "safe_div failed")
+    0
+}

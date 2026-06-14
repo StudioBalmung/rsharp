@@ -1,0 +1,13 @@
+// integration test: enums and match
+enum Direction { North, South, East, West }
+
+fn opposite(d: Direction) => Direction {
+    match d {
+        .North => Direction::South,
+        .South => Direction::North,
+        .East  => Direction::West,
+        .West  => Direction::East,
+    }
+}
+
+fn main() => i32 { 0 }
