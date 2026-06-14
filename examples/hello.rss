@@ -1,7 +1,0 @@
--- examples/hello.rss
--- R# Hello World
-
-fn main() => i32 {
-    @print("Hello from R#!")
-    0
-}
