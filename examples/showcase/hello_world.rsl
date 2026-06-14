@@ -1,0 +1,7 @@
+// hello_world.rsl — R# Hello World (canonical)
+// Run: rsl run  OR  rsc src/hello_world.rsl -o hello && ./hello
+
+fn main() => i32 {
+    @print("Hello, World!")
+    0
+}

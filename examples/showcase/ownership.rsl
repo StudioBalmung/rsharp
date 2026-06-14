@@ -1,0 +1,63 @@
+// ownership.rsl — ownership, borrowing, defer, arena
+
+use core::Arena
+
+struct Buffer {
+    pub data: []u8,
+    pub len:  usize,
+}
+
+impl Buffer {
+    fn new(arena: *Arena, size: usize) => Buffer {
+        Buffer {
+            data: arena.alloc(u8, size),
+            len:  size,
+        }
+    }
+
+    fn fill(self, byte: u8) => void {
+        for i in 0..self.len {
+            self.data[i] = byte
+        }
+    }
+
+    fn checksum(self) => u32 {
+        var sum: u32 = 0
+        for b in self.data[0..self.len] {
+            sum += b as u32
+        }
+        sum
+    }
+}
+
+// Borrow: takes []u8 — no ownership transfer
+fn sum_bytes(data: []u8) => u64 {
+    var total: u64 = 0
+    for b in data { total += b as u64 }
+    total
+}
+
+// Move: Buffer is consumed, caller can no longer use it
+fn consume_buffer(buf: Buffer) => void {
+    @print("consuming {} bytes, checksum={}", buf.len, buf.checksum())
+    // buf dropped here — data freed with the arena it came from
+}
+
+fn main() => i32 {
+    let arena = Arena.init(1024 * 64)
+    defer arena.deinit()          // always runs on scope exit
+
+    var buf = Buffer.new(&arena, 256)
+    buf.fill(0xAB)
+
+    // Shared borrow — buf is still valid after this call
+    let total = sum_bytes(buf.data)
+    @print("sum of borrows: {}", total)
+
+    // Move — buf is no longer accessible after this line
+    consume_buffer(buf)
+    // @print("{}", buf.len)  // ERROR: use of moved value 'buf'
+
+    // Arena freed by defer above
+    0
+}

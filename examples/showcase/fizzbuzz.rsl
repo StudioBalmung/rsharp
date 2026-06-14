@@ -1,0 +1,15 @@
+// fizzbuzz.rsl — FizzBuzz in R#
+
+fn fizzbuzz(n: i32) => str {
+    if n % 15 == 0 { "FizzBuzz" }
+    else if n % 3 == 0 { "Fizz" }
+    else if n % 5 == 0 { "Buzz" }
+    else { @int_to_str(n) }
+}
+
+fn main() => i32 {
+    for i in 1..=100 {
+        @print("{}", fizzbuzz(i))
+    }
+    0
+}
