@@ -1,0 +1,2 @@
+#!/bin/bash
+/c/msys64/ucrt64/bin/windres.exe --use-temp-file "$@"
