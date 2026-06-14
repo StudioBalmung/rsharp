@@ -1,0 +1,7 @@
+// stdlib/collections/collections.rsl — Container module index
+pub use vec::Vec
+pub use map::HashMap
+pub use set::HashSet
+pub use deque::Deque
+pub use linked_list::LinkedList
+pub use priority_queue::PriorityQueue

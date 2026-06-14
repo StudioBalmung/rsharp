@@ -1,0 +1,65 @@
+// stdlib/collections/priority_queue.rsl — Binary max-heap
+use core::Arena
+
+pub struct PriorityQueue<T> {
+    _data:  []T,
+    _len:   usize,
+    _cap:   usize,
+    _arena: *Arena,
+}
+
+pub impl<T> PriorityQueue<T> {
+    pub fn new(arena: *Arena) => PriorityQueue<T> {
+        let cap = 16usize
+        PriorityQueue<T> { _data: arena.alloc(T,cap), _len:0, _cap:cap, _arena:arena }
+    }
+    pub fn push(self, val: T) => void {
+        if self._len == self._cap {
+            let nc = self._cap * 2
+            let nd = self._arena.alloc(T,nc)
+            for i in 0..self._len { nd[i] = self._data[i] }
+            self._data = nd; self._cap = nc
+        }
+        self._data[self._len] = val
+        self._len += 1
+        self._sift_up(self._len - 1)
+    }
+    pub fn pop(self) => ?T {
+        if self._len == 0 { return null }
+        let top = self._data[0]
+        self._len -= 1
+        if self._len > 0 {
+            self._data[0] = self._data[self._len]
+            self._sift_down(0)
+        }
+        top
+    }
+    pub fn peek(self) => ?T { if self._len==0 {null} else {self._data[0]} }
+    pub fn len(self)  => usize { self._len }
+    pub fn is_empty(self) => bool { self._len == 0 }
+    fn _sift_up(self, mut i: usize) => void {
+        while i > 0 {
+            let parent = (i - 1) / 2
+            if self._data[i] > self._data[parent] {
+                let tmp = self._data[i]
+                self._data[i] = self._data[parent]
+                self._data[parent] = tmp
+                i = parent
+            } else { break }
+        }
+    }
+    fn _sift_down(self, mut i: usize) => void {
+        loop {
+            let left  = 2 * i + 1
+            let right = 2 * i + 2
+            var largest = i
+            if left  < self._len && self._data[left]  > self._data[largest] { largest = left  }
+            if right < self._len && self._data[right] > self._data[largest] { largest = right }
+            if largest == i { break }
+            let tmp = self._data[i]
+            self._data[i] = self._data[largest]
+            self._data[largest] = tmp
+            i = largest
+        }
+    }
+}

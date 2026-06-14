@@ -1,0 +1,26 @@
+// stdlib/collections/set.rsl — HashSet<T>
+use core::Arena
+use collections::map::HashMap
+
+pub struct HashSet<T> {
+    _map: HashMap<T, bool>,
+}
+
+pub impl<T> HashSet<T> {
+    pub fn new(arena: *Arena) => HashSet<T> {
+        HashSet<T> { _map: HashMap.new(arena) }
+    }
+    pub fn with_capacity(arena: *Arena, cap: usize) => HashSet<T> {
+        HashSet<T> { _map: HashMap.with_capacity(arena, cap) }
+    }
+    pub fn insert(self, val: T) => bool {
+        if self._map.contains(val) { return false }
+        self._map.insert(val, true)
+        true
+    }
+    pub fn remove(self, val: T) => bool { self._map.remove(val) }
+    pub fn contains(self, val: T) => bool { self._map.contains(val) }
+    pub fn len(self) => usize { self._map.len() }
+    pub fn is_empty(self) => bool { self._map.is_empty() }
+    pub fn clear(self) => void { self._map.clear() }
+}

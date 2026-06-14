@@ -1,0 +1,106 @@
+// stdlib/collections/map.rsl — Hash map (Map<K, V>)
+// Open-addressing, Robin Hood probing
+
+use core::Arena
+
+pub struct MapEntry<K, V> {
+    key:  K,
+    val:  V,
+    hash: u64,
+    dist: u32,   // probe distance (0 = empty)
+}
+
+pub struct Map<K, V> {
+    _buckets: []MapEntry<K, V>,
+    _cap:     usize,
+    _len:     usize,
+    _arena:   *Arena,
+}
+
+pub impl<K, V> Map<K, V> {
+    pub fn new(arena: *Arena) => Map<K, V> {
+        let cap = 16
+        let buckets = arena.alloc_zero(MapEntry<K,V>, cap)
+        Map<K,V> { _buckets: buckets, _cap: cap, _len: 0, _arena: arena }
+    }
+
+    pub fn len(self)      => usize { self._len }
+    pub fn is_empty(self) => bool  { self._len == 0 }
+
+    pub fn insert(self, key: K, val: V) => void {
+        if self._len * 4 >= self._cap * 3 { self._rehash() }
+        let h = @hash(key)
+        var idx = h % self._cap as u64
+        var dist: u32 = 1
+        var entry = MapEntry<K,V> { key, val, hash: h, dist }
+        loop {
+            let cur = &self._buckets[idx]
+            if cur.dist == 0 { cur.* = entry; self._len += 1; return }
+            if cur.hash == h && @eq(cur.key, key) { cur.val = val; return }
+            if cur.dist < entry.dist {
+                let tmp = cur.*; cur.* = entry; entry = tmp
+            }
+            idx = (idx + 1) % self._cap as u64
+            dist += 1
+            entry.dist = dist
+        }
+    }
+
+    pub fn get(self, key: K) => ?V {
+        let h = @hash(key)
+        var idx = h % self._cap as u64
+        var dist: u32 = 1
+        loop {
+            let cur = self._buckets[idx]
+            if cur.dist == 0 { return null }
+            if cur.dist < dist { return null }
+            if cur.hash == h && @eq(cur.key, key) { return cur.val }
+            idx = (idx + 1) % self._cap as u64
+            dist += 1
+        }
+    }
+
+    pub fn contains(self, key: K) => bool { self.get(key) != null }
+
+    pub fn remove(self, key: K) => bool {
+        let h = @hash(key)
+        var idx = h % self._cap as u64
+        var dist: u32 = 1
+        loop {
+            let cur = &self._buckets[idx]
+            if cur.dist == 0 { return false }
+            if cur.dist < dist { return false }
+            if cur.hash == h && @eq(cur.key, key) {
+                cur.dist = 0; self._len -= 1
+                // backward shift
+                loop {
+                    let ni = (idx + 1) % self._cap as u64
+                    let next = &self._buckets[ni]
+                    if next.dist <= 1 { break }
+                    self._buckets[idx] = next.*
+                    self._buckets[idx].dist -= 1
+                    next.dist = 0
+                    idx = ni
+                }
+                return true
+            }
+            idx = (idx + 1) % self._cap as u64
+            dist += 1
+        }
+    }
+
+    fn _rehash(self) => void {
+        let new_cap = self._cap * 2
+        let new_buckets = self._arena.alloc_zero(MapEntry<K,V>, new_cap)
+        let old = self._buckets
+        let old_cap = self._cap
+        self._buckets = new_buckets
+        self._cap = new_cap
+        self._len = 0
+        for i in 0..old_cap {
+            if old[i].dist != 0 {
+                self.insert(old[i].key, old[i].val)
+            }
+        }
+    }
+}

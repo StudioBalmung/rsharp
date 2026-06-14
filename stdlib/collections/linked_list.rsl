@@ -1,0 +1,43 @@
+// stdlib/collections/linked_list.rsl — Doubly linked list
+use core::Arena
+
+struct LLNode<T> {
+    val:  T,
+    next: ?*LLNode<T>,
+    prev: ?*LLNode<T>,
+}
+
+pub struct LinkedList<T> {
+    _head:  ?*LLNode<T>,
+    _tail:  ?*LLNode<T>,
+    _len:   usize,
+    _arena: *Arena,
+}
+
+pub impl<T> LinkedList<T> {
+    pub fn new(arena: *Arena) => LinkedList<T> {
+        LinkedList<T> { _head: null, _tail: null, _len: 0, _arena: arena }
+    }
+    pub fn push_back(self, val: T) => void {
+        let node_mem = self._arena.alloc(LLNode<T>, 1)
+        node_mem[0] = LLNode<T> { val, next: null, prev: self._tail }
+        let node = &node_mem[0]
+        if self._tail != null { self._tail.*.next = node }
+        else { self._head = node }
+        self._tail = node
+        self._len += 1
+    }
+    pub fn push_front(self, val: T) => void {
+        let node_mem = self._arena.alloc(LLNode<T>, 1)
+        node_mem[0] = LLNode<T> { val, next: self._head, prev: null }
+        let node = &node_mem[0]
+        if self._head != null { self._head.*.prev = node }
+        else { self._tail = node }
+        self._head = node
+        self._len += 1
+    }
+    pub fn front(self) => ?T { if self._head==null {null} else {self._head.*.val} }
+    pub fn back(self)  => ?T { if self._tail==null {null} else {self._tail.*.val} }
+    pub fn len(self)   => usize { self._len }
+    pub fn is_empty(self) => bool { self._len == 0 }
+}

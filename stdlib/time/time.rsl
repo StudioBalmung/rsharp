@@ -1,0 +1,127 @@
+// stdlib/time/time.rsl — Date & Time
+
+// ── Duration ──────────────────────────────────────────────────────
+pub struct Duration {
+    _nanos: u64,   // total nanoseconds
+}
+
+pub impl Duration {
+    pub fn from_secs(s: u64) => Duration { Duration { _nanos: s * 1_000_000_000u64 } }
+    pub fn from_millis(ms: u64) => Duration { Duration { _nanos: ms * 1_000_000u64 } }
+    pub fn from_micros(us: u64) => Duration { Duration { _nanos: us * 1_000u64 } }
+    pub fn from_nanos(ns: u64) => Duration { Duration { _nanos: ns } }
+
+    pub fn as_secs(self) => u64 { self._nanos / 1_000_000_000u64 }
+    pub fn as_millis(self) => u64 { self._nanos / 1_000_000u64 }
+    pub fn as_micros(self) => u64 { self._nanos / 1_000u64 }
+    pub fn as_nanos(self) => u64 { self._nanos }
+    pub fn as_secs_f64(self) => f64 { self._nanos as f64 / 1_000_000_000.0 }
+
+    pub fn add(self, other: Duration) => Duration {
+        Duration { _nanos: self._nanos + other._nanos }
+    }
+    pub fn sub(self, other: Duration) => Duration {
+        Duration { _nanos: if self._nanos > other._nanos { self._nanos - other._nanos } else { 0u64 } }
+    }
+}
+
+// ── Instant (monotonic clock) ─────────────────────────────────────
+pub struct Instant { _nanos: u64 }
+
+pub impl Instant {
+    pub fn now() => Instant {
+        Instant { _nanos: @sys_monotonic_ns() }
+    }
+    pub fn elapsed(self) => Duration {
+        let now = Instant.now()
+        Duration { _nanos: now._nanos - self._nanos }
+    }
+    pub fn duration_since(self, earlier: Instant) => Duration {
+        Duration { _nanos: self._nanos - earlier._nanos }
+    }
+}
+
+// ── SystemTime (wall clock) ───────────────────────────────────────
+pub struct SystemTime {
+    _secs:  i64,   // seconds since Unix epoch
+    _nanos: u32,   // nanosecond offset
+}
+
+pub const UNIX_EPOCH: SystemTime = SystemTime { _secs: 0, _nanos: 0 }
+
+pub impl SystemTime {
+    pub fn now() => SystemTime {
+        let ts = @sys_clock_realtime()
+        SystemTime { _secs: ts.secs, _nanos: ts.nanos }
+    }
+
+    pub fn unix_secs(self) => i64 { self._secs }
+    pub fn unix_millis(self) => i64 { self._secs * 1000i64 + self._nanos as i64 / 1_000_000i64 }
+
+    pub fn duration_since(self, earlier: SystemTime) => Duration {
+        let ds = self._secs - earlier._secs
+        let dn = self._nanos as i64 - earlier._nanos as i64
+        Duration { _nanos: (ds * 1_000_000_000i64 + dn) as u64 }
+    }
+
+    pub fn add(self, dur: Duration) => SystemTime {
+        let extra_secs = dur.as_secs() as i64
+        let extra_nanos = (dur.as_nanos() % 1_000_000_000u64) as u32
+        var nanos = self._nanos + extra_nanos
+        var secs  = self._secs + extra_secs
+        if nanos >= 1_000_000_000u32 { nanos -= 1_000_000_000u32; secs += 1i64 }
+        SystemTime { _secs: secs, _nanos: nanos }
+    }
+}
+
+// ── DateTime (calendar time) ──────────────────────────────────────
+pub struct DateTime {
+    pub year:   i32,
+    pub month:  u8,   // 1-12
+    pub day:    u8,   // 1-31
+    pub hour:   u8,   // 0-23
+    pub minute: u8,   // 0-59
+    pub second: u8,   // 0-60 (leap seconds)
+    pub nano:   u32,
+    pub weekday: u8,  // 0=Sun, 1=Mon, ...6=Sat
+}
+
+pub impl DateTime {
+    pub fn from_unix(secs: i64) => DateTime {
+        @sys_unix_to_datetime(secs)
+    }
+
+    pub fn now() => DateTime {
+        DateTime.from_unix(SystemTime.now().unix_secs())
+    }
+
+    pub fn is_leap_year(self) => bool {
+        (self.year % 4 == 0 && self.year % 100 != 0) || self.year % 400 == 0
+    }
+
+    pub fn weekday_name(self) => str {
+        match self.weekday {
+            0 => "Sunday", 1 => "Monday",  2 => "Tuesday",
+            3 => "Wednesday", 4 => "Thursday",
+            5 => "Friday",  6 => "Saturday", _ => "?",
+        }
+    }
+
+    pub fn month_name(self) => str {
+        match self.month {
+            1=>"January", 2=>"February", 3=>"March",     4=>"April",
+            5=>"May",     6=>"June",     7=>"July",       8=>"August",
+            9=>"September",10=>"October",11=>"November", 12=>"December",
+            _=>"?",
+        }
+    }
+}
+
+// ── Sleep ─────────────────────────────────────────────────────────
+pub fn sleep(dur: Duration) => void {
+    @sys_sleep_ns(dur.as_nanos())
+}
+
+pub fn sleep_ms(ms: u64) => void {
+    sleep(Duration.from_millis(ms))
+}

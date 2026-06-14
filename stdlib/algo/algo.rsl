@@ -1,0 +1,119 @@
+// stdlib/algo/algo.rsl — Algorithms
+use collections::vec::Vec
+
+// ── Sorting ───────────────────────────────────────────────────────
+pub fn sort_i32(data: []i32) => void {
+    _quicksort_i32(data, 0, data.len)
+}
+
+pub fn sort_f64(data: []f64) => void {
+    _quicksort_f64(data, 0, data.len)
+}
+
+fn _quicksort_i32(data: []i32, lo: usize, hi: usize) => void {
+    if lo + 1 >= hi { return }
+    let pivot = data[(lo + hi) / 2]
+    var i = lo
+    var j = hi - 1
+    loop {
+        while data[i] < pivot { i += 1 }
+        while data[j] > pivot { if j == 0 { break } j -= 1 }
+        if i >= j { break }
+        let tmp = data[i]; data[i] = data[j]; data[j] = tmp
+        i += 1; if j > 0 { j -= 1 }
+    }
+    _quicksort_i32(data, lo, j + 1)
+    _quicksort_i32(data, j + 1, hi)
+}
+
+fn _quicksort_f64(data: []f64, lo: usize, hi: usize) => void {
+    if lo + 1 >= hi { return }
+    let pivot = data[(lo + hi) / 2]
+    var i = lo; var j = hi - 1
+    loop {
+        while data[i] < pivot { i += 1 }
+        while data[j] > pivot { if j==0{break}; j -= 1 }
+        if i >= j { break }
+        let tmp = data[i]; data[i] = data[j]; data[j] = tmp
+        i += 1; if j>0{j -= 1}
+    }
+    _quicksort_f64(data, lo, j+1)
+    _quicksort_f64(data, j+1, hi)
+}
+
+// ── Searching ─────────────────────────────────────────────────────
+pub fn binary_search(sorted: []i32, target: i32) => ?usize {
+    var lo: usize = 0
+    var hi: usize = sorted.len
+    while lo < hi {
+        let mid = lo + (hi - lo) / 2
+        if sorted[mid] == target { return mid }
+        if sorted[mid] < target { lo = mid + 1 }
+        else { hi = mid }
+    }
+    null
+}
+
+pub fn linear_search(data: []i32, target: i32) => ?usize {
+    for i in 0..data.len {
+        if data[i] == target { return i }
+    }
+    null
+}
+
+// ── Slice operations ──────────────────────────────────────────────
+pub fn reverse_i32(data: []i32) => void {
+    var lo: usize = 0
+    var hi: usize = if data.len > 0 { data.len - 1 } else { 0 }
+    while lo < hi {
+        let tmp = data[lo]; data[lo] = data[hi]; data[hi] = tmp
+        lo += 1; hi -= 1
+    }
+}
+
+pub fn filter_i32(data: []i32, arena: *core::Arena, pred: fn(i32) => bool) => []i32 {
+    let result = core::Vec.new(arena)
+    for x in data { if pred(x) { result.push(x) } }
+    result.as_slice()
+}
+
+pub fn map_i32(data: []i32, arena: *core::Arena, f: fn(i32) => i32) => []i32 {
+    let result = arena.alloc(i32, data.len)
+    for i in 0..data.len { result[i] = f(data[i]) }
+    result
+}
+
+pub fn reduce_i32(data: []i32, init: i32, f: fn(i32, i32) => i32) => i32 {
+    var acc = init
+    for x in data { acc = f(acc, x) }
+    acc
+}
+
+pub fn count_if(data: []i32, pred: fn(i32) => bool) => usize {
+    var c: usize = 0
+    for x in data { if pred(x) { c += 1 } }
+    c
+}
+
+pub fn any(data: []i32, pred: fn(i32) => bool) => bool {
+    for x in data { if pred(x) { return true } }
+    false
+}
+
+pub fn all(data: []i32, pred: fn(i32) => bool) => bool {
+    for x in data { if !pred(x) { return false } }
+    true
+}
+
+pub fn unique_i32(data: []i32, arena: *core::Arena) => []i32 {
+    if data.len == 0 { return data }
+    let sorted_copy = arena.alloc(i32, data.len)
+    for i in 0..data.len { sorted_copy[i] = data[i] }
+    sort_i32(sorted_copy)
+    let out = core::Vec.new(arena)
+    out.push(sorted_copy[0])
+    for i in 1..sorted_copy.len {
+        if sorted_copy[i] != sorted_copy[i-1] { out.push(sorted_copy[i]) }
+    }
+    out.as_slice()
+}

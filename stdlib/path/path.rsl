@@ -1,0 +1,140 @@
+// stdlib/path/path.rsl — File paths and directory operations
+
+use core::{ Arena, Result }
+use io::IoError
+
+pub struct Path {
+    _buf: []u8,
+    _len: usize,
+}
+
+pub impl Path {
+    pub fn new(arena: *Arena, s: str) => Path {
+        let buf = arena.alloc(u8, s.len + 1)
+        for i in 0..s.len { buf[i] = s[i] }
+        buf[s.len] = 0u8
+        Path { _buf: buf, _len: s.len }
+    }
+
+    pub fn as_str(self) => str { @bytes_to_str(self._buf, self._len) }
+
+    pub fn exists(self) => bool { @sys_access(self.as_str(), 0) == 0 }
+
+    pub fn is_file(self) => bool { @sys_is_file(self.as_str()) }
+    pub fn is_dir(self)  => bool { @sys_is_dir(self.as_str()) }
+
+    pub fn parent(self, arena: *Arena) => ?Path {
+        let s = self.as_str()
+        var i: usize = s.len
+        while i > 0 {
+            i -= 1
+            if s[i] == '/' as u8 || s[i] == '\' as u8 {
+                return Path.new(arena, @str_slice(s, 0, i))
+            }
+        }
+        null
+    }
+
+    pub fn file_name(self, arena: *Arena) => ?str {
+        let s = self.as_str()
+        var i: usize = s.len
+        while i > 0 {
+            i -= 1
+            if s[i] == '/' as u8 || s[i] == '\' as u8 {
+                return @str_slice(s, i + 1, s.len)
+            }
+        }
+        s
+    }
+
+    pub fn extension(self) => ?str {
+        let name = self.file_name(null as *Arena) ?? self.as_str()
+        var i: usize = name.len
+        while i > 0 {
+            i -= 1
+            if name[i] == '.' as u8 { return @str_slice(name, i + 1, name.len) }
+        }
+        null
+    }
+
+    pub fn join(self, arena: *Arena, other: str) => Path {
+        let s = self.as_str()
+        let needs_sep = s.len > 0 && s[s.len-1] != '/' as u8
+        let total = s.len + (if needs_sep {1usize} else {0usize}) + other.len
+        let buf = arena.alloc(u8, total + 1)
+        var pos: usize = 0
+        for i in 0..s.len { buf[pos] = s[i]; pos += 1 }
+        if needs_sep { buf[pos] = '/' as u8; pos += 1 }
+        for i in 0..other.len { buf[pos] = other[i]; pos += 1 }
+        buf[pos] = 0u8
+        Path { _buf: buf, _len: total }
+    }
+}
+
+// ── Directory operations ──────────────────────────────────────────
+pub fn mkdir(path: str) => Result<void, IoError> {
+    if @sys_mkdir(path, 0o755) != 0 {
+        return Err(IoError::Os { code: @sys_errno(), msg: "mkdir failed" })
+    }
+    Ok(void)
+}
+
+pub fn mkdir_all(path: str, arena: *Arena) => Result<void, IoError> {
+    let p = Path.new(arena, path)
+    if p.exists() { return Ok(void) }
+    if let Some { parent } = p.parent(arena) {
+        try mkdir_all(parent.as_str(), arena)
+    }
+    mkdir(path)
+}
+
+pub fn remove_file(path: str) => Result<void, IoError> {
+    if @sys_unlink(path) != 0 {
+        return Err(IoError::Os { code: @sys_errno(), msg: "remove failed" })
+    }
+    Ok(void)
+}
+
+pub fn remove_dir(path: str) => Result<void, IoError> {
+    if @sys_rmdir(path) != 0 {
+        return Err(IoError::Os { code: @sys_errno(), msg: "rmdir failed" })
+    }
+    Ok(void)
+}
+
+pub fn rename(from: str, to: str) => Result<void, IoError> {
+    if @sys_rename(from, to) != 0 {
+        return Err(IoError::Os { code: @sys_errno(), msg: "rename failed" })
+    }
+    Ok(void)
+}
+
+pub fn copy_file(src: str, dst: str, arena: *Arena) => Result<void, IoError> {
+    let data = try io::read_file(src, arena)
+    try io::write_file(dst, data)
+    Ok(void)
+}
+
+// ── Directory iteration ────────────────────────────────────────────
+pub struct DirEntry {
+    pub name: str,
+    pub is_dir: bool,
+    pub is_file: bool,
+    pub size: u64,
+}
+
+pub fn read_dir(path: str, arena: *Arena) => Result<[]DirEntry, IoError> {
+    let entries = @sys_readdir(path, arena)
+    if entries == null {
+        return Err(IoError::NotFound { path })
+    }
+    Ok(entries)
+}
+
+pub fn current_dir(arena: *Arena) => Result<Path, IoError> {
+    let buf = arena.alloc(u8, 4096)
+    if @sys_getcwd(buf, 4096) == null {
+        return Err(IoError::Os { code: @sys_errno(), msg: "getcwd failed" })
+    }
+    Ok(Path { _buf: buf, _len: @sys_strlen(buf) })
+}

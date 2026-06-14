@@ -1,0 +1,55 @@
+// stdlib/collections/deque.rsl — Double-ended queue (ring buffer)
+use core::Arena
+
+pub struct Deque<T> {
+    _data:  []T,
+    _head:  usize,
+    _tail:  usize,
+    _len:   usize,
+    _cap:   usize,
+    _arena: *Arena,
+}
+
+pub impl<T> Deque<T> {
+    pub fn new(arena: *Arena) => Deque<T> {
+        let cap = 8usize
+        Deque<T> { _data: arena.alloc(T,cap), _head:0, _tail:0, _len:0, _cap:cap, _arena:arena }
+    }
+    pub fn push_back(self, val: T) => void {
+        if self._len == self._cap { self._grow() }
+        self._data[self._tail] = val
+        self._tail = (self._tail + 1) % self._cap
+        self._len += 1
+    }
+    pub fn push_front(self, val: T) => void {
+        if self._len == self._cap { self._grow() }
+        self._head = (self._head + self._cap - 1) % self._cap
+        self._data[self._head] = val
+        self._len += 1
+    }
+    pub fn pop_back(self) => ?T {
+        if self._len == 0 { return null }
+        self._tail = (self._tail + self._cap - 1) % self._cap
+        self._len -= 1
+        self._data[self._tail]
+    }
+    pub fn pop_front(self) => ?T {
+        if self._len == 0 { return null }
+        let v = self._data[self._head]
+        self._head = (self._head + 1) % self._cap
+        self._len -= 1
+        v
+    }
+    pub fn front(self) => ?T { if self._len==0 {null} else {self._data[self._head]} }
+    pub fn back(self)  => ?T { if self._len==0 {null} else {self._data[(self._tail+self._cap-1)%self._cap]} }
+    pub fn len(self)   => usize { self._len }
+    pub fn is_empty(self) => bool { self._len == 0 }
+    fn _grow(self) => void {
+        let nc = self._cap * 2
+        let nd = self._arena.alloc(T, nc)
+        for i in 0..self._len {
+            nd[i] = self._data[(self._head + i) % self._cap]
+        }
+        self._data = nd; self._cap = nc; self._head = 0; self._tail = self._len
+    }
+}

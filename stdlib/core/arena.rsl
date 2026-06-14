@@ -1,0 +1,52 @@
+// stdlib/core/arena.rsl — Arena Allocator (R# wrapper over C runtime)
+
+// Arena is the primary allocator in R#.
+// All heap memory is arena-scoped — no GC, no implicit malloc.
+
+pub struct Arena {
+    _inner: *void,   // opaque: points to C Arena struct
+}
+
+pub impl Arena {
+    // Create arena with given byte capacity
+    pub fn init(capacity: usize) => Arena {
+        Arena { _inner: @arena_create(capacity) }
+    }
+
+    // Allocate count elements of type T
+    pub fn alloc(self, comptime T: type, count: usize) => []T {
+        @arena_alloc_typed(self._inner, T, count)
+    }
+
+    // Allocate and zero-initialise
+    pub fn alloc_zero(self, comptime T: type, count: usize) => []T {
+        @arena_calloc_typed(self._inner, T, count)
+    }
+
+    // Duplicate a string into this arena
+    pub fn str_dup(self, s: str) => str {
+        @arena_strdup(self._inner, s)
+    }
+
+    // Save a restore point
+    pub fn checkpoint(self) => ArenaCheckpoint {
+        @arena_checkpoint(self._inner)
+    }
+
+    // Rewind to checkpoint (free everything allocated after it)
+    pub fn rewind(self, cp: ArenaCheckpoint) => void {
+        @arena_rewind(self._inner, cp)
+    }
+
+    // Free all allocations (keep arena object for re-use)
+    pub fn reset(self) => void {
+        @arena_reset(self._inner)
+    }
+
+    // Destroy arena and release all memory to OS
+    pub fn deinit(self) => void {
+        @arena_destroy(self._inner)
+    }
+}
+
+pub struct ArenaCheckpoint { _inner: *void }

@@ -1,0 +1,161 @@
+// stdlib/sync/sync.rsl — Concurrency: Threads, Mutex, Channel, Atomic
+// R# Standard Library v1.1
+
+use core::Arena
+use core::Result
+
+// ── Thread ────────────────────────────────────────────────────────
+pub struct Thread { _handle: *void }
+
+pub impl Thread {
+    pub fn spawn(arena: *Arena, f: fn() => void) => Result<Thread, str> {
+        let h = @sys_thread_create(f)
+        if h == null { return Err("thread creation failed") }
+        Ok(Thread { _handle: h })
+    }
+
+    pub fn join(self) => Result<void, str> {
+        if @sys_thread_join(self._handle) != 0 { return Err("thread join failed") }
+        Ok(void)
+    }
+
+    pub fn detach(self) => void { @sys_thread_detach(self._handle) }
+
+    pub fn current_id() => u64 { @sys_thread_id() }
+    pub fn yield_now() => void  { @sys_thread_yield() }
+    pub fn sleep_ms(ms: u64) => void { @sys_sleep_ms(ms) }
+}
+
+// ── Mutex<T> ──────────────────────────────────────────────────────
+pub struct Mutex<T> {
+    _lock: *void,
+    _data: T,
+}
+
+pub struct MutexGuard<T> {
+    _mutex: *Mutex<T>,
+}
+
+pub impl<T> Mutex<T> {
+    pub fn new(arena: *Arena, val: T) => Mutex<T> {
+        Mutex<T> { _lock: @sys_mutex_create(), _data: val }
+    }
+
+    pub fn lock(self) => MutexGuard<T> {
+        @sys_mutex_lock(self._lock)
+        MutexGuard<T> { _mutex: &self }
+    }
+
+    pub fn try_lock(self) => ?MutexGuard<T> {
+        if @sys_mutex_trylock(self._lock) == 0 {
+            MutexGuard<T> { _mutex: &self }
+        } else { null }
+    }
+
+    pub fn destroy(self) => void { @sys_mutex_destroy(self._lock) }
+}
+
+pub impl<T> MutexGuard<T> {
+    pub fn get(self) => *T { &self._mutex._data }
+    pub fn drop(self) => void { @sys_mutex_unlock(self._mutex._lock) }
+}
+
+// ── RwLock<T> ─────────────────────────────────────────────────────
+pub struct RwLock<T> {
+    _lock: *void,
+    _data: T,
+}
+
+pub impl<T> RwLock<T> {
+    pub fn new(arena: *Arena, val: T) => RwLock<T> {
+        RwLock<T> { _lock: @sys_rwlock_create(), _data: val }
+    }
+    pub fn read(self)  => *T   { @sys_rwlock_rdlock(self._lock); &self._data }
+    pub fn write(self) => *T   { @sys_rwlock_wrlock(self._lock); &self._data }
+    pub fn unlock(self) => void { @sys_rwlock_unlock(self._lock) }
+}
+
+// ── Channel<T> ────────────────────────────────────────────────────
+pub struct Channel<T> {
+    _inner: *void,
+    _bounded: bool,
+}
+
+pub impl<T> Channel<T> {
+    pub fn unbounded() => Channel<T> {
+        Channel<T> { _inner: @sys_chan_create(0), _bounded: false }
+    }
+    pub fn bounded(cap: usize) => Channel<T> {
+        Channel<T> { _inner: @sys_chan_create(cap), _bounded: true }
+    }
+    pub fn send(self, val: T) => Result<void, str> {
+        if @sys_chan_send(self._inner, &val as *void, @sizeof(T)) != 0 {
+            return Err("channel send failed")
+        }
+        Ok(void)
+    }
+    pub fn recv(self) => Result<T, str> {
+        var val: T = @zero_init()
+        if @sys_chan_recv(self._inner, &val as *void, @sizeof(T)) != 0 {
+            return Err("channel recv failed")
+        }
+        Ok(val)
+    }
+    pub fn try_recv(self) => ?T {
+        var val: T = @zero_init()
+        if @sys_chan_try_recv(self._inner, &val as *void, @sizeof(T)) == 0 { val }
+        else { null }
+    }
+    pub fn close(self) => void { @sys_chan_close(self._inner) }
+    pub fn clone(self) => Channel<T> {
+        @sys_chan_ref(self._inner)
+        Channel<T> { _inner: self._inner, _bounded: self._bounded }
+    }
+}
+
+// ── Atomic types ──────────────────────────────────────────────────
+pub struct AtomicI32 { _val: i32 }
+pub impl AtomicI32 {
+    pub fn new(v: i32) => AtomicI32 { AtomicI32 { _val: v } }
+    pub fn load(self) => i32 { @atomic_load_i32(&self._val) }
+    pub fn store(self, v: i32) => void { @atomic_store_i32(&self._val, v) }
+    pub fn fetch_add(self, v: i32) => i32 { @atomic_fetch_add_i32(&self._val, v) }
+    pub fn fetch_sub(self, v: i32) => i32 { @atomic_fetch_sub_i32(&self._val, v) }
+    pub fn compare_exchange(self, expected: i32, desired: i32) => bool {
+        @atomic_cmpxchg_i32(&self._val, expected, desired)
+    }
+}
+
+pub struct AtomicU32 { _val: u32 }
+pub impl AtomicU32 {
+    pub fn new(v: u32) => AtomicU32 { AtomicU32 { _val: v } }
+    pub fn load(self) => u32 { @atomic_load_u32(&self._val) }
+    pub fn store(self, v: u32) => void { @atomic_store_u32(&self._val, v) }
+    pub fn fetch_add(self, v: u32) => u32 { @atomic_fetch_add_u32(&self._val, v) }
+    pub fn fetch_sub(self, v: u32) => u32 { @atomic_fetch_sub_u32(&self._val, v) }
+}
+
+pub struct AtomicBool { _val: u8 }
+pub impl AtomicBool {
+    pub fn new(v: bool) => AtomicBool { AtomicBool { _val: if v { 1u8 } else { 0u8 } } }
+    pub fn load(self) => bool { @atomic_load_u8(&self._val) != 0 }
+    pub fn store(self, v: bool) => void { @atomic_store_u8(&self._val, if v { 1u8 } else { 0u8 }) }
+    pub fn swap(self, v: bool) => bool { @atomic_swap_u8(&self._val, if v {1u8} else {0u8}) != 0 }
+}
+
+// ── Once ──────────────────────────────────────────────────────────
+pub struct Once { _done: AtomicBool, _lock: *void }
+pub impl Once {
+    pub fn new() => Once {
+        Once { _done: AtomicBool.new(false), _lock: @sys_mutex_create() }
+    }
+    pub fn call_once(self, f: fn() => void) => void {
+        if self._done.load() { return }
+        @sys_mutex_lock(self._lock)
+        if !self._done.load() {
+            f()
+            self._done.store(true)
+        }
+        @sys_mutex_unlock(self._lock)
+    }
+}
